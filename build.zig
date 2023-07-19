@@ -845,6 +845,9 @@ pub fn build(b: *std.build.Builder) void {
     lib.addCSourceFiles(&swscale_sources, ffmpeg_cflags ++ [_][]const u8{
         "-DBUILDING_swscale",
     });
+    lib.addCSourceFiles(&avdevice_sources, ffmpeg_cflags ++ [_][]const u8{
+        "-DBUILDING_avdevice",
+    });
     switch (t.cpu.arch) {
         .x86_64, .x86 => {
             lib.addCSourceFiles(&avcodec_sources_x86, ffmpeg_cflags ++ [_][]const u8{
@@ -981,14 +984,16 @@ pub fn build(b: *std.build.Builder) void {
     lib.installConfigHeader(avconfig_h, .{});
     for (headers) |h| lib.installHeader(h, h);
 
-    const metadata = b.addExecutable(.{
-        .name = "metadata",
+    const ffmpeg = b.addExecutable(.{
+        .name = "ffmpeg",
         .target = target,
         .optimize = optimize,
     });
-    metadata.addCSourceFiles(&.{"doc/examples/metadata.c"}, &.{});
-    metadata.linkLibrary(lib);
-    b.installArtifact(metadata);
+    ffmpeg.addConfigHeader(config_h);
+    ffmpeg.addCSourceFiles(&ffmpeg_sources, ffmpeg_cflags);
+    ffmpeg.addIncludePath(".");
+    ffmpeg.linkLibrary(lib);
+    b.installArtifact(ffmpeg);
 }
 
 const headers = [_][]const u8{
@@ -4043,6 +4048,70 @@ const nasm_sources = [_][]const u8{
     "libavcodec/x86/diracdsp.asm",
     "libavcodec/x86/pngdsp.asm",
     "libavcodec/x86/hevc_add_res.asm",
+};
+
+const avdevice_sources = [_][]const u8{
+// TODO: yeah... not sure how outdev_list.c and indev_list.c are generated
+    "libavdevice/alldevices.c",
+//    "libavdevice/alsa.c",
+//    "libavdevice/alsa_dec.c",
+//    "libavdevice/alsa_enc.c",
+//    "libavdevice/android_camera.c",
+    "libavdevice/avdevice.c",
+//    "libavdevice/bktr.c",
+//    "libavdevice/caca.c",
+//    "libavdevice/decklink_dec_c.c",
+//    "libavdevice/decklink_enc_c.c",
+//    "libavdevice/dshow.c",
+//    "libavdevice/dshow_common.c",
+//    "libavdevice/dshow_crossbar.c",
+//    "libavdevice/dshow_enummediatypes.c",
+//    "libavdevice/dshow_enumpins.c",
+//    "libavdevice/dshow_filter.c",
+//    "libavdevice/dshow_pin.c",
+//    "libavdevice/fbdev_common.c",
+//    "libavdevice/fbdev_dec.c",
+//    "libavdevice/fbdev_enc.c",
+    "libavdevice/file_open.c",
+//    "libavdevice/gdigrab.c",
+//    "libavdevice/iec61883.c",
+//    "libavdevice/jack.c",
+//    "libavdevice/kmsgrab.c",
+    "libavdevice/lavfi.c",
+//    "libavdevice/libcdio.c",
+//    "libavdevice/libdc1394.c",
+//    "libavdevice/openal-dec.c",
+//    "libavdevice/opengl_enc.c",
+//    "libavdevice/oss.c",
+//    "libavdevice/oss_dec.c",
+//    "libavdevice/oss_enc.c",
+//    "libavdevice/pulse_audio_common.c",
+//    "libavdevice/pulse_audio_dec.c",
+//    "libavdevice/pulse_audio_enc.c",
+//    "libavdevice/reverse.c",
+//    "libavdevice/sdl2.c",
+//    "libavdevice/sndio.c",
+//    "libavdevice/sndio_dec.c",
+//    "libavdevice/sndio_enc.c",
+    "libavdevice/timefilter.c",
+    "libavdevice/utils.c",
+//    "libavdevice/v4l2-common.c",
+//    "libavdevice/v4l2.c",
+//    "libavdevice/v4l2enc.c",
+    "libavdevice/version.c",
+//    "libavdevice/vfwcap.c",
+//    "libavdevice/xcbgrab.c",
+//    "libavdevice/xv.c",
+};
+
+const ffmpeg_sources = [_][]const u8{
+    "fftools/cmdutils.c",
+    "fftools/ffmpeg.c",
+    "fftools/ffmpeg_filter.c",
+    "fftools/ffmpeg_hw.c",
+    "fftools/ffmpeg_mux.c",
+    "fftools/ffmpeg_opt.c",
+    "fftools/opt_common.c",
 };
 
 fn fastUnalignedLoads(t: std.Target) bool {
